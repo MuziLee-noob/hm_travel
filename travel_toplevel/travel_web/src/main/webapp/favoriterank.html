@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>收藏排行榜</title>
+        <link rel="stylesheet" type="text/css" href="css/common.css">
+        <link rel="stylesheet" type="text/css" href="css/ranking-list.css">
+        <script src="js/jquery-3.3.1.js"></script>
+
+        <script>
+
+            $(function () {
+                findRouteRank();
+            });
+
+            function searchByCondition() {
+                var rname = $("#rname").val();
+                var lowPrice = $("#lowPrice").val();
+                var highPrice = $("#highPrice").val();
+                if (rname != null) {
+                    rname = window.decodeURIComponent(rname);
+                }
+                findRouteRank(null, rname, lowPrice, highPrice);
+            }
+
+            function findRouteRank(currentPage, rname, lowPrice, highPrice) {
+
+                $.get("route/findRouteRank", {currentPage:currentPage, rname:rname, lowPrice:lowPrice, highPrice:highPrice}, function (pb) {
+                    //1.-------------------------------------显示页码-------------------------------------------
+                    var lis = "";
+
+                    var li_first = '<li onclick="findRouteRank(1)"><a href="javascript:void(0)">首页</a>';
+
+                    // var li_first = '<li onclick="load(' + cid + ')"><a href="javascript:void(0)">首页</a>';
+
+                    var prev = pb.currentPage - 1 <= 0 ? 1 : pb.currentPage - 1;
+
+                    var li_previous = '<li  onclick="findRouteRank(' + prev + ')" class="threeword"><a href="javascript:void(0)">上一页</a></li>';
+                    lis += li_first;
+                    lis += li_previous;
+                    /*
+                        1.一共展示10个页码
+                     */
+                    //定义开始位置，结束为止
+                    var begin;
+                    var end;
+
+                    //判断总页码是否小于10页
+                    if (pb.totalPage < 10) {
+                        begin = 1;
+                        end = pb.totalPage;
+                    } else {
+                        begin = pb.currentPage - 5;
+                        end = pb.currentPage + 4;
+
+                        //如果当前页前边不够5页，后边补齐
+                        if (begin < 1) {
+                            begin = 1;
+                            end = begin + 9;
+                        }
+                        //如果当前页后边不足4页，前边补齐
+                        if (end > pb.totalPage) {
+                            end = pb.totalPage;
+                            begin = end - 9;
+                        }
+                    }
+
+                    for (var i = begin; i <= end; i++) {
+                        var li;
+                        //判断当前页面是否等于i
+                        if (pb.currentPage === i) {
+                            li = '<li class="curPage" onclick="findRouteRank(' + i +')"><a href="javascript:void(0)">'+i+'</a></li>';
+                        } else {
+                            li = '<li onclick="findRouteRank(' + i + ')"><a href="javascript:void(0)">'+i+'</a></li>';
+                        }
+
+                        lis += li;
+                    }
+
+                    var next = pb.currentPage + 1 >= pb.totalPage ? pb.totalPage : pb.currentPage + 1;
+                    var li_next = '<li  onclick="findRouteRank(' + next + ')" class="threeword"><a href="javascript:void(0)">下一页</a></li>';
+                    var li_last = '<li onclick="findRouteRank(' + pb.totalPage + ' )"><a href="javascript:void(0)">末页</a>';
+                    lis += li_next;
+                    lis += li_last;
+                    $("#pageNum").html(lis);
+                    //2.===============================展示数据=======================================
+                    var rlis = '';
+
+
+                    for (var j = 0; j < pb.list.length; j++) {
+                        var route = pb.list[j];
+                        var rli = '';
+                        if (route.rank === 1) {
+                            rlis += '<li>\n' +
+                                '<span class="num one">'+ route.rank +'</span>\n' +
+                                '<a href="route_detail.html?rid=' + route.rid + '"><img src="' + route.rimage + '" alt=""></a>\n' +
+                                '<h4><a href="route_detail.html?rid=' + route.rid + '">' + route.rname + '</a></h4>\n' +
+                                '<p>\n' +
+                                '<b class="price">&yen;<span>' + route.price + '</span>起</b>\n' +
+                                '<span class="shouchang">已收藏' + route.count + '次</span>\n' +
+                                '</p>\n' +
+                                '</li>';
+                        } else if(route.rank === 2) {
+                            rlis += '<li>\n' +
+                                '<span class="num two">'+ route.rank +'</span>\n' +
+                                '<a href="route_detail.html?rid=' + route.rid + '"><img src="' + route.rimage + '" alt=""></a>\n' +
+                                '<h4><a href="route_detail.html?rid=' + route.rid + '">' + route.rname + '</a></h4>\n' +
+                                '<p>\n' +
+                                '<b class="price">&yen;<span>' + route.price + '</span>起</b>\n' +
+                                '<span class="shouchang">已收藏' + route.count + '次</span>\n' +
+                                '</p>\n' +
+                                '</li>';
+                        } else {
+                            rli += '<li>\n' +
+                                '<span class="num">'+ route.rank +'</span>\n' +
+                                '<a href="route_detail.html?rid=' + route.rid + '"><img src="' + route.rimage + '" alt=""></a>\n' +
+                                '<h4><a href="route_detail.html?rid=' + route.rid + '">' + route.rname + '</a></h4>\n' +
+                                '<p>\n' +
+                                '<b class="price">&yen;<span>' + route.price + '</span>起</b>\n' +
+                                '<span class="shouchang">已收藏' + route.count + '次</span>\n' +
+                                '</p>\n' +
+                                '</li>';
+                        }
+                        rlis += rli;
+                    }
+                    $("#route").html(rlis);
+                })
+            }
+        </script>
+    </head>
+    <body>
+    <!--引入头部-->
+    <div id="header"></div>
+        <div class="contant">
+            <div class="shaixuan">
+                <span>线路名称</span>
+                <input type="text" name="rname" id="rname">
+                <span>金额</span>
+                <input type="text" name="lowPrice" id="lowPrice">~<input type="text" name="highPrice" id="highPrice">
+                <button onclick="searchByCondition()" id="search">搜索</button>
+            </div>
+            <div class="list clearfix">
+                <ul id="route">
+
+                </ul>
+            </div>
+            <div class="pageNum">
+                <ul id="pageNum">
+                    <li><a href="">首页</a></li>
+                    <li class="threeword"><a href="#">上一页</a></li>
+                    <li><a href="#">1</a></li>
+                    <li><a href="#">2</a></li>
+                    <li><a href="#">3</a></li>
+                    <li><a href="#">4</a></li>
+                    <li><a href="#">5</a></li>
+                    <li><a href="#">6</a></li>
+                    <li><a href="#">7</a></li>
+                    <li><a href="#">8</a></li>
+                    <li><a href="#">9</a></li>
+                    <li><a href="#">10</a></li>
+                    <li class="threeword"><a href="javascript:;">下一页</a></li>
+                    <li class="threeword"><a href="javascript:;">末页</a></li>
+                </ul>
+            </div>
+        </div>
+    	
+         <!--导入底部-->
+   		 <div id="footer"></div>
+    <!--导入布局js，共享header和footer-->
+    <script type="text/javascript" src="js/include.js"></script>
+    </body>
+</html>
